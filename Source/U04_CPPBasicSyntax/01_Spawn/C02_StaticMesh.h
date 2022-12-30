@@ -16,7 +16,7 @@ protected:
 	virtual void BeginPlay() override;
 
 
-private:
+protected:
 	UPROPERTY(VisibleDefaultsOnly)
 		class UStaticMeshComponent* Mesh;
 };
