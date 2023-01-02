@@ -17,7 +17,8 @@ void AC02_Spawner::BeginPlay()
 
 		Meshes[i] = GetWorld()->SpawnActor<AC02_StaticMesh>(SpawnClasses[i], transform);
 
-		//Meshes[i]->GetActorLocation();
+		FVector worldLocation = GetActorLocation();
+		Meshes[i]->SetActorLocation(FVector(worldLocation.X, worldLocation.Y + i * 200, worldLocation.Z));
 	}
 
 }

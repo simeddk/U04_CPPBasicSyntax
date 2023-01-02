@@ -15,8 +15,15 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+private:
+	UFUNCTION()
+		void ChangeParameter();
+
 
 protected:
 	UPROPERTY(VisibleDefaultsOnly)
 		class UStaticMeshComponent* Mesh;
+
+private:
+	class UMaterialInstanceDynamic* DynamicMaterial;
 };
