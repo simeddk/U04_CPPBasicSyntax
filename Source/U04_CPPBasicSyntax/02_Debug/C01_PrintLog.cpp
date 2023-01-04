@@ -34,6 +34,8 @@ void AC01_PrintLog::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bVisible == false) return;
+
 	RunningTime += DeltaTime;
 	CLog::Print(RunningTime, 100);
 }
