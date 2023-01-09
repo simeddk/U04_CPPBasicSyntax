@@ -13,6 +13,14 @@ void AC03_LightTrigger::ActorBeginOverlap(AActor* OverlappedActor, AActor* Other
 {
 	if (OnBoxBeginOverlap.IsBound())
 		OnBoxBeginOverlap.Execute();
+
+	if (OnBoxBeginRandomLightColor.IsBound())
+	{
+		FString str;
+		str = OnBoxBeginRandomLightColor.Execute(FLinearColor::MakeRandomColor());
+		str = "Random Color is " + str;
+		CLog::Log(str);
+	}
 }
 
 void AC03_LightTrigger::ActorEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
@@ -20,5 +28,4 @@ void AC03_LightTrigger::ActorEndOverlap(AActor* OverlappedActor, AActor* OtherAc
 	if (OnBoxEndOverlap.IsBound())
 		OnBoxEndOverlap.Execute();
 
-	//Todo. 딜리게이트 바인딩 해야 함
 }
