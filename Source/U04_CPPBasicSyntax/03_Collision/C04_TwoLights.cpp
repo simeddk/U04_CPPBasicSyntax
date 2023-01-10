@@ -5,6 +5,7 @@
 
 AC04_TwoLights::AC04_TwoLights()
 {
+
 	PointLight1 = CreateDefaultSubobject<UPointLightComponent>("PointLight1");
 	PointLight1->SetupAttachment(Scene);
 
