@@ -22,4 +22,8 @@ private:
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
 		void SetBodyColor();
+
+	UFUNCTION(BlueprintNativeEvent)
+		void ResetBodyColor();
+	void ResetBodyColor_Implementation();
 };
