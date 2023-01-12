@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "CPlayer.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInteractEvent);
+
 UCLASS()
 class U04_CPPBASICSYNTAX_API ACPlayer : public ACharacter
 {
@@ -35,6 +37,8 @@ private:
 	void OnRun();
 	void OffRun();
 
+	void OnInteract();
+
 private:
 	UPROPERTY(VisibleDefaultsOnly)
 		class USpringArmComponent* SpringArm;
@@ -45,4 +49,7 @@ private:
 private:
 	class UMaterialInstanceDynamic* BodyMaterialDynamic;
 	class UMaterialInstanceDynamic* LogoMaterialDynamic;
+
+public:
+	FInteractEvent OnInteractEvent;
 };
