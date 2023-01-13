@@ -18,6 +18,17 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
+
+private:
+	UFUNCTION()
+		void ActorBeginOverlap(class AActor* OverlappedActor, class AActor* OtherActor);
+	
+	UFUNCTION()
+		void ActorEndOverlap(class AActor* OverlappedActor, class AActor* OtherActor);
+
+	UFUNCTION()
+		void Interact();
+
 private:
 	UPROPERTY(VisibleDefaultsOnly)
 		class USceneComponent* Scene;
@@ -30,4 +41,26 @@ private:
 
 	UPROPERTY(VisibleDefaultsOnly)
 		class UBoxComponent* Box;
+
+private:
+	UPROPERTY(EditAnywhere)
+		bool bHiddenCollision;
+
+	UPROPERTY(EditAnywhere)
+		float MaxDegree = 90.f;
+
+	UPROPERTY(EditAnywhere)
+		float Speed = 100.f;
+
+private:
+	class ACPlayer* Player;
+
+	float Direction; //-1, +1
+	float DirectionMaxDegree; //-90, +90
+	float YawPerTick;
+	
+	bool bClosed = true; //Open or Close
+	bool bOpening; //Tick
+	bool bClosing; //Tick
+
 };
