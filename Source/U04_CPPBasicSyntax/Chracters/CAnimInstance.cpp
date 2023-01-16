@@ -1,15 +1,27 @@
 #include "CAnimInstance.h"
 #include "Global.h"
-#include "Chracters/CPlayer.h"
+#include "Chracters/IRifle.h"
+#include "Weapons/CRifle.h"
+#include "GameFramework/Character.h"
 
 void UCAnimInstance::NativeBeginPlay()
 {
-	Player = Cast<ACPlayer>(TryGetPawnOwner());
+	Super::NativeBeginPlay();
+
+	OwnerCharacter = Cast<ACharacter>(TryGetPawnOwner());
 }
 
 void UCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
-	if (Player == nullptr) return;
+	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	Speed = Player->GetVelocity().Size2D();
+	if (OwnerCharacter == nullptr) return;
+
+	Speed = OwnerCharacter->GetVelocity().Size2D();
+
+	IIRifle* rifleInterface = Cast<IIRifle>(OwnerCharacter);
+	if (!!rifleInterface)
+	{
+		bEquipped = rifleInterface->GetRifle()->IsEquipped();
+	}
 }

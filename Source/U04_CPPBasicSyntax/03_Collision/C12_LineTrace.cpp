@@ -61,7 +61,6 @@ void AC12_LineTrace::Ragdoll(AActor* InActor, FLinearColor InColor)
 	ACPlayer* player = Cast<ACPlayer>(InActor);
 	if (player == nullptr) return;
 
-	//Todo. AddImpulse, Addforce....
 	player->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	player->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	player->GetMesh()->SetSimulatePhysics(true);
