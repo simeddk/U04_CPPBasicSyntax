@@ -36,11 +36,49 @@ void ACRifle::Equip()
 
 	bEquipping = true;
 
-	OwnerCharacter->PlayAnimMontage(GrabMontage);
+	OwnerCharacter->PlayAnimMontage(GrabMontage, 1.75f);
+}
+
+void ACRifle::Begin_Equip()
+{
+	bEquipped = true;
+	AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), HandSocket);
+}
+
+void ACRifle::End_Equip()
+{
+	bEquipping = false;
 }
 
 void ACRifle::Unequip()
 {
+	if (bEquipped == false) return;
+	if (bEquipping == true) return;
+
+	bEquipping = true;
+
+	OwnerCharacter->PlayAnimMontage(UngrabMontage, 1.75f);
+}
+
+void ACRifle::Begin_Unequip()
+{
+	bEquipped = false;
+	AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), HolsterSocket);
+}
+
+void ACRifle::End_Unequip()
+{
+	bEquipping = false;
+}
+
+void ACRifle::Begin_Aiming()
+{
+	bAiming = true;
+}
+
+void ACRifle::End_Aiming()
+{
+	bAiming = false;
 }
 
 void ACRifle::BeginPlay()
