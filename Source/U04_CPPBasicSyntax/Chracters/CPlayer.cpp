@@ -48,7 +48,7 @@ ACPlayer::ACPlayer()
 void ACPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	UObject* obj;
 	
 	//Body Material Asset
@@ -149,6 +149,8 @@ void ACPlayer::OnRifle()
 {
 	if (Rifle->IsEquipped())
 	{
+		OffAim();
+
 		Rifle->Unequip();
 		return;
 	}
@@ -168,6 +170,8 @@ void ACPlayer::OnAim()
 	SpringArm->SocketOffset = FVector(0, 30, 10);
 
 	ZoomIn();
+
+	Rifle->Begin_Aiming();
 	
 }
 
@@ -184,6 +188,7 @@ void ACPlayer::OffAim()
 
 	ZoomOut();
 
+	Rifle->End_Aiming();
 }
 
 
