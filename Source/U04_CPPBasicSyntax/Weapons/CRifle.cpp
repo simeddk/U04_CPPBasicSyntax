@@ -1,5 +1,6 @@
 #include "CRifle.h"
 #include "Global.h"
+#include "Chracters/IRifle.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 
@@ -93,5 +94,25 @@ void ACRifle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//조준 중일때 -> 표적판 마우스를 대면 -> 위젯.Dot 빨갛게...
+	if (bAiming == false) return;
+
+	IIRifle* rifleInterface = Cast<IIRifle>(OwnerCharacter);
+	if (rifleInterface == nullptr) return;
+
+	FVector start, end, direction;
+	rifleInterface->GetAimInfo(start, end, direction);
+	
+	//DrawDebugLine(GetWorld(), start, end, FColor::Red, false, -1.f, 0, 3.f);
+
+	FHitResult hitResult;
+	FCollisionQueryParams collisionQueryParams;
+	collisionQueryParams.AddIgnoredActor(this);
+	collisionQueryParams.AddIgnoredActor(OwnerCharacter);
+
+	if (GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECollisionChannel::ECC_PhysicsBody, collisionQueryParams))
+	{
+		//라인에 닿았으면 오너캐릭->OnTarget(점을 빨갛게..)....
+	}
 }
 

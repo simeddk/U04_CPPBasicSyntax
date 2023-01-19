@@ -2,12 +2,14 @@
 #include "Global.h"
 #include "CAnimInstance.h"
 #include "Weapons/CRifle.h"
+#include "Widgets/CUserWidget_Aim.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Blueprint/UserWidget.h"
 
 ACPlayer::ACPlayer()
 {
@@ -43,6 +45,11 @@ ACPlayer::ACPlayer()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = 400.f;
+	
+	//Get Aim Widget ClassRef
+	ConstructorHelpers::FClassFinder<UCUserWidget_Aim> aimWidgetClass(TEXT("WidgetBlueprint'/Game/Widgets/WB_Aim.WB_Aim_C'"));
+	if (aimWidgetClass.Succeeded())
+		AimWidgetClass = aimWidgetClass.Class;
 }
 
 void ACPlayer::BeginPlay()
@@ -72,6 +79,10 @@ void ACPlayer::BeginPlay()
 	//Spawn Rifle
 	Rifle = ACRifle::Spawn(GetWorld(), this);
 
+	//Create Aim Widget
+	AimWidget = CreateWidget<UCUserWidget_Aim, APlayerController>(GetController<APlayerController>(), AimWidgetClass);
+	AimWidget->AddToViewport();
+	AimWidget->SetVisibility(ESlateVisibility::Hidden);
 
 	OnRifle();
 }
@@ -172,6 +183,8 @@ void ACPlayer::OnAim()
 	ZoomIn();
 
 	Rifle->Begin_Aiming();
+
+	AimWidget->SetVisibility(ESlateVisibility::Visible);
 	
 }
 
@@ -189,8 +202,32 @@ void ACPlayer::OffAim()
 	ZoomOut();
 
 	Rifle->End_Aiming();
+
+	AimWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
+
+void ACPlayer::GetAimInfo(FVector& OutAimStart, FVector& OutAimEnd, FVector& OutAimDirection)
+{
+	OutAimDirection = Camera->GetForwardVector();
+
+	FTransform transform = Camera->GetComponentToWorld();
+	FVector cameraLocation = transform.GetLocation();
+	OutAimStart = cameraLocation + OutAimDirection * 100.f;
+
+	FVector recoilCone = UKismetMathLibrary::RandomUnitVectorInConeInDegrees(OutAimDirection, 0.2f);
+	OutAimEnd = cameraLocation + recoilCone * 3000;
+}
+
+void ACPlayer::OnTarget()
+{
+	AimWidget->OnTarget();
+}
+
+void ACPlayer::OffTarget()
+{
+	AimWidget->OffTarget();
+}
 
 void ACPlayer::ChangeBodyColor(FLinearColor InBodyColor, FLinearColor InLogoColor)
 {
