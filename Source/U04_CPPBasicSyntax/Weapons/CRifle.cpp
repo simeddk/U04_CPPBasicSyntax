@@ -2,9 +2,15 @@
 #include "Global.h"
 #include "Chracters/IRifle.h"
 #include "Chracters/CPlayer.h"
+#include "CBullet.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/DecalComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/StaticMeshActor.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystem.h"
+#include "Materials/MaterialInstanceConstant.h"
 
 ACRifle::ACRifle()
 {
@@ -27,6 +33,30 @@ ACRifle::ACRifle()
 	ConstructorHelpers::FClassFinder<UCameraShake> cameraShakeAsset(TEXT("Blueprint'/Game/Weapons/BP_CameraShake.BP_CameraShake_C'"));
 	if (cameraShakeAsset.Succeeded())
 		CameraShakeClass = cameraShakeAsset.Class;
+
+	ConstructorHelpers::FClassFinder<ACBullet> bulletClassAsset(TEXT("Blueprint'/Game/Weapons/BP_CBullet.BP_CBullet_C'"));
+	if (bulletClassAsset.Succeeded())
+		BulletClass = bulletClassAsset.Class;
+
+	ConstructorHelpers::FObjectFinder<UParticleSystem> flashParticleAsset(TEXT("ParticleSystem'/Game/Particles_Rifle/Particles/VFX_Muzzleflash.VFX_Muzzleflash'"));
+	if (flashParticleAsset.Succeeded())
+		FlashParticle = flashParticleAsset.Object;
+
+	ConstructorHelpers::FObjectFinder<UParticleSystem> ejectParticleAsset(TEXT("ParticleSystem'/Game/Particles_Rifle/Particles/VFX_Eject_bullet.VFX_Eject_bullet'"));
+	if (ejectParticleAsset.Succeeded())
+		EjectParticle = ejectParticleAsset.Object;
+
+	ConstructorHelpers::FObjectFinder<UParticleSystem> impactParticleAsset(TEXT("ParticleSystem'/Game/Particles_Rifle/Particles/VFX_Impact_Default.VFX_Impact_Default'"));
+	if (impactParticleAsset.Succeeded())
+		ImpactParticle = impactParticleAsset.Object;
+
+	ConstructorHelpers::FObjectFinder<USoundCue> fireSoundCueAsset(TEXT("SoundCue'/Game/Sounds/S_RifleShoot_Cue.S_RifleShoot_Cue'"));
+	if (fireSoundCueAsset.Succeeded())
+		FireSoundCue = fireSoundCueAsset.Object;
+
+	ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> decalAsset(TEXT("MaterialInstanceConstant'/Game/Materials/M_Decal_Inst.M_Decal_Inst'"));
+	if (decalAsset.Succeeded())
+		DecalMaterial = decalAsset.Object;
 }
 
 ACRifle* ACRifle::Spawn(UWorld* InWorld, ACharacter* InOwnerCharacter)
@@ -55,6 +85,9 @@ void ACRifle::Begin_Equip()
 void ACRifle::End_Equip()
 {
 	bEquipping = false;
+
+	OwnerCharacter->bUseControllerRotationYaw = true;
+	OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 }
 
 void ACRifle::Unequip()
@@ -65,12 +98,17 @@ void ACRifle::Unequip()
 	bEquipping = true;
 
 	OwnerCharacter->PlayAnimMontage(UngrabMontage, 1.75f);
+
+	End_Fire();
 }
 
 void ACRifle::Begin_Unequip()
 {
 	bEquipped = false;
 	AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, true), HolsterSocket);
+
+	OwnerCharacter->bUseControllerRotationYaw = false;
+	OwnerCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 void ACRifle::End_Unequip()
@@ -92,10 +130,18 @@ void ACRifle::Begin_Fire()
 {
 	if (bEquipped == false) return;
 	if (bEquipping == true) return;
-	if (bAiming == false) return;
+	//if (bAiming == false) return;
 	if (bFiring == true) return;
 
 	bFiring = true;
+
+	CurrentPitch = 0.f;
+
+	if (bAutoFire == true)
+	{
+		GetWorld()->GetTimerManager().SetTimer(AutoFireTimer, this, &ACRifle::Firing, 0.1f, true);
+		return;
+	}
 
 	Firing();
 }
@@ -103,13 +149,18 @@ void ACRifle::Begin_Fire()
 void ACRifle::End_Fire()
 {
 	bFiring = false;
+
+	if (bAutoFire == true)
+		GetWorld()->GetTimerManager().ClearTimer(AutoFireTimer);
 }
 
 void ACRifle::Firing()
 {
-	//Todo
-	//- > Bullet Class : StaticMeshComp, ProjectileMovementComp
-	// -> Effect(Sound, Particle, Decal)
+	//Get Aim Info
+	IIRifle* rifleInterface = Cast<IIRifle>(OwnerCharacter);
+	if (rifleInterface == nullptr) return;
+	FVector start, end, direction;
+	rifleInterface->GetAimInfo(start, end, direction);
 
 	//Camera Shake
 	ACPlayer* player = Cast<ACPlayer>(OwnerCharacter);
@@ -121,13 +172,21 @@ void ACRifle::Firing()
 			controller->PlayerCameraManager->PlayCameraShake(CameraShakeClass);
 	}
 
+	//Spanw Bullet
+	FVector muzzleLocation = Mesh->GetSocketLocation("MuzzleFlash");
+	if (!!BulletClass)
+		GetWorld()->SpawnActor<ACBullet>(BulletClass, muzzleLocation, direction.Rotation());
 
-	IIRifle* rifleInterface = Cast<IIRifle>(OwnerCharacter);
-	if (rifleInterface == nullptr) return;
+	//Play Effect
+	UGameplayStatics::SpawnEmitterAttached(FlashParticle, Mesh, "MuzzleFlash", FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset);
+	UGameplayStatics::SpawnEmitterAttached(EjectParticle, Mesh, "EjectBullet", FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset);
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), FireSoundCue, muzzleLocation);
 
-	FVector start, end, direction;
-	rifleInterface->GetAimInfo(start, end, direction);
+	//Raising Pitch
+	CurrentPitch -= PitchSpeed * GetWorld()->GetDeltaSeconds();
+	OwnerCharacter->AddControllerPitchInput(CurrentPitch);
 
+	//LineTrace(Visibility)
 	FHitResult hitResult;
 	FCollisionQueryParams collisionQueryParams;
 	collisionQueryParams.AddIgnoredActor(this);
@@ -141,6 +200,12 @@ void ACRifle::Firing()
 			UStaticMeshComponent* staticMeshComp = Cast<UStaticMeshComponent>(staticMeshActor->GetRootComponent());
 			if (!!staticMeshComp)
 			{
+				//Spanw Decal & Impact Particle
+				FRotator decalRotator = hitResult.ImpactNormal.Rotation();
+				UDecalComponent* decalComp = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), DecalMaterial, FVector(5), hitResult.Location, decalRotator, 10.f);
+				decalComp->SetFadeScreenSize(0);
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticle, hitResult.Location, decalRotator, true);
+
 				//Add Impulse - Target
 				if (staticMeshComp->BodyInstance.bSimulatePhysics)
 				{
@@ -154,6 +219,7 @@ void ACRifle::Firing()
 			}// if (!!staticMeshComp)
 		}// if (!!staticMeshActor)
 	}//if (LineTrace)
+
 }
 
 void ACRifle::BeginPlay()

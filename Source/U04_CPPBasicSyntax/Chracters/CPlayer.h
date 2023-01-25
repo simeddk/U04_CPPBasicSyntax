@@ -60,6 +60,8 @@ private:
 	void OnFire();
 	void OffFire();
 
+	void OnAutoFire();
+
 private:
 	UPROPERTY(VisibleDefaultsOnly)
 		class USpringArmComponent* SpringArm;
@@ -72,6 +74,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<class UCUserWidget_Aim> AimWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+		TSubclassOf<class UCUserWidget_AutoFire> AutoFireWidgetClass;
+
 private:
 	class UMaterialInstanceDynamic* BodyMaterialDynamic;
 	class UMaterialInstanceDynamic* LogoMaterialDynamic;
@@ -82,4 +87,5 @@ public:
 private:
 	class ACRifle* Rifle;
 	class UCUserWidget_Aim* AimWidget;
+	class UCUserWidget_AutoFire* AutoFireWidget;
 };
